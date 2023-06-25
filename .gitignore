@@ -1,0 +1,9 @@
+.vscode
+.env
+*.log
+.DS_Store
+
+tmp
+out
+vendor
+main
