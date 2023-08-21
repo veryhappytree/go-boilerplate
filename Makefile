@@ -1,3 +1,5 @@
+.PHONY: run build tidy
+
 run:
 	go run ./cmd/main.go
 
