@@ -15,9 +15,9 @@ const successStatus = "PONG"
 var Client *redis.Client
 var ErrorRedisClientConnectionFailed = errors.New("[CACHE] redis client connection was failed")
 
-func Setup(ctx context.Context, config config.RedisConfig) {
+func Setup(ctx context.Context, cfg config.RedisConfig) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     config.RedisHost,
+		Addr:     cfg.RedisHost,
 		Password: "",
 		DB:       0,
 		PoolSize: 1,

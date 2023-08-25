@@ -17,25 +17,25 @@ import (
 
 func main() {
 	logger.SetupZeroLog()
-	log.Info().Msg("[APP] initialise app")
+	log.Info().Msg("[APP] initialize app")
 
-	config := config.LoadConfig(".")
-	log.Info().Msgf("[APP] current env: \t%s", config.App.Env)
+	cfg := config.LoadConfig(".")
+	log.Info().Msgf("[APP] current env: \t%s", cfg.App.Env)
 
-	database.Setup(config.Database)
+	database.Setup(&cfg.Database)
 	database.EnsureMigrations(database.Migrations)
 
-	api.ServePublicServer(config.Server)
-	api.ServeApiDocs(config.Server)
+	api.ServePublicServer(cfg.Server)
+	api.ServeAPIDocs(cfg.Server)
 
-	redis.Setup(context.TODO(), config.Redis)
+	redis.Setup(context.TODO(), cfg.Redis)
 
-	rabbit.Setup(config.Rabbit)
+	rabbit.Setup(cfg.Rabbit)
 	rabbit.Service.RegisterConsumers([]string{})
 
-	gracefullShutdown([]func() error{
+	gracefullShutdown(
 		func() error {
-			return database.DbConnection.Close()
+			return database.DBConnection.Close()
 		},
 		func() error {
 			return redis.Client.Close()
@@ -48,15 +48,17 @@ func main() {
 			os.Exit(0)
 			return nil
 		},
-	})
+	)
 }
 
-func gracefullShutdown(ops []func() error) {
+func gracefullShutdown(ops ...func() error) {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)
 	if <-shutdown != nil {
 		for _, op := range ops {
-			op()
+			if err := op(); err != nil {
+				log.Panic().AnErr("gracefullShutdown op failed", err)
+			}
 		}
 	}
 }

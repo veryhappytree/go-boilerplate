@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func ServePublicServer(config config.ServerConfig) {
+func ServePublicServer(cfg config.ServerConfig) {
 	r := chi.NewRouter()
 
 	r.Use(
@@ -21,17 +21,36 @@ func ServePublicServer(config config.ServerConfig) {
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),
 	)
+
+	r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		//nolint:errcheck
+		w.Write([]byte("boilerplate"))
+	})
+
+	httpPort := fmt.Sprintf(":%d", cfg.Port)
+	go func() {
+		if err := http.ListenAndServe(httpPort, r); err != nil {
+			log.Panic().AnErr("ServePublicServer http.ListenAndServe failed", err)
+		}
+	}()
+
+	log.Info().Msgf("[HTTP] server is running at port: \t%d\n", cfg.Port)
 }
 
 //go:embed docs/api-docs.json
 var apiDocs []byte
 
-func ServeApiDocs(config config.ServerConfig) {
+func ServeAPIDocs(cfg config.ServerConfig) {
 	mux := http.NewServeMux()
 	mux.Handle("/api-docs/", http.StripPrefix("/api-docs", swaggerui.Handler(apiDocs)))
 
-	httpPort := fmt.Sprintf(":%d", config.ApiDocsPort)
-	go http.ListenAndServe(httpPort, mux)
+	httpPort := fmt.Sprintf(":%d", cfg.APIDocsPort)
+	go func() {
+		if err := http.ListenAndServe(httpPort, mux); err != nil {
+			log.Panic().AnErr("ServeAPIDocs http.ListenAndServe failed", err)
+		}
+	}()
 
-	log.Info().Msgf("[HTTP] api docs server is running at port: \t%d\n", config.ApiDocsPort)
+	log.Info().Msgf("[HTTP] api docs server is running at port: \t%d\n", cfg.APIDocsPort)
 }

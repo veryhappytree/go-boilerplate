@@ -1,4 +1,4 @@
-.PHONY: run build tidy
+.PHONY: run build tidy lint
 
 run:
 	go run ./cmd/main.go
@@ -8,3 +8,6 @@ build:
 
 tidy:
 	go mod tidy
+
+lint:
+	golangci-lint run ./... --fast --config=./.golangci.yml

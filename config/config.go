@@ -28,7 +28,7 @@ type RedisConfig struct {
 }
 
 type ServerConfig struct {
-	ApiDocsPort int `mapstructure:"HTTP_PORT_API_DOCS"`
+	APIDocsPort int `mapstructure:"HTTP_PORT_API_DOCS"`
 	Port        int `mapstructure:"HTTP_PORT"`
 }
 
@@ -58,7 +58,7 @@ func LoadConfig(path string) (config Config) {
 		log.Panic().Err(err).Msg("[APP] cannot initialize configuration")
 	}
 
-	log.Info().Msg("[APP] config was loaded succesfully")
+	log.Info().Msg("[APP] config was loaded successfully")
 
 	LoadedConfig = config
 

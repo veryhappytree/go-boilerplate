@@ -10,11 +10,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type handler func([]byte)
+type handlerFunc func([]byte)
 
 type pusher struct {
 	Channel  *amqp.Channel
-	handlers map[string]handler
+	handlers map[string]handlerFunc
 }
 
 var Service *pusher
@@ -30,13 +30,13 @@ func Setup(cfg config.RabbitConfig) {
 	pusher := new(pusher)
 	pusher.Channel = ch
 	// Feel free to add handlers
-	pusher.handlers = map[string]handler{}
+	pusher.handlers = map[string]handlerFunc{}
 	Service = pusher
 
 	log.Info().Msgf("[AMQP] server is running")
 }
 
-func (p *pusher) Publish(ctx context.Context, queueName string, data interface{}) {
+func (p *pusher) Publish(_ context.Context, queueName string, data any) {
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		log.Panic().Err(err)
@@ -49,7 +49,7 @@ func (p *pusher) Publish(ctx context.Context, queueName string, data interface{}
 		false,
 		amqp.Publishing{
 			ContentType: "application/json",
-			Body:        []byte(bytes),
+			Body:        bytes,
 		},
 	)
 
@@ -82,7 +82,7 @@ func (p *pusher) RegisterConsumer(queueName string, callback func([]byte)) {
 
 func (p *pusher) RegisterConsumers(consumers []string) {
 	for _, consumer := range consumers {
-		var handler handler
+		var handler handlerFunc
 		if handler = p.handlers[consumer]; handler != nil {
 			p.RegisterConsumer(consumer, handler)
 		}
