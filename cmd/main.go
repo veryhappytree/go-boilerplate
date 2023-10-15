@@ -33,7 +33,7 @@ func main() {
 	rabbit.Setup(cfg.Rabbit)
 	rabbit.Service.RegisterConsumers([]string{})
 
-	gracefullShutdown(
+	gracefulShutdown(
 		func() error {
 			return database.DBConnection.Close()
 		},
@@ -51,7 +51,7 @@ func main() {
 	)
 }
 
-func gracefullShutdown(ops ...func() error) {
+func gracefulShutdown(ops ...func() error) {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)
 	if <-shutdown != nil {
