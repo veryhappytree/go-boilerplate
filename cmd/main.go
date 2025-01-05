@@ -2,25 +2,26 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"go-boilerplate/config"
 	"go-boilerplate/pkg/api"
 	"go-boilerplate/pkg/database"
 	"go-boilerplate/pkg/logger"
 	"go-boilerplate/pkg/rabbit"
 	"go-boilerplate/pkg/redis"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	logger.SetupZeroLog()
-	log.Info().Msg("[APP] initialize app")
+	logger.Setup()
+
+	slog.Info("[APP]", "message", "Initialize app")
 
 	cfg := config.LoadConfig(".")
-	log.Info().Msgf("[APP] current env: \t%s", cfg.App.Env)
+	slog.Info("[APP]", "message", fmt.Sprintf("current env: %s", cfg.App.Env))
 
 	database.Setup(&cfg.Database)
 	database.EnsureMigrations(database.Migrations)
@@ -44,7 +45,6 @@ func main() {
 			return rabbit.Service.Channel.Close()
 		},
 		func() error {
-			log.Warn().Msg("[APP] shutting down service")
 			os.Exit(0)
 			return nil
 		},
@@ -57,7 +57,8 @@ func gracefulShutdown(ops ...func() error) {
 	if <-shutdown != nil {
 		for _, op := range ops {
 			if err := op(); err != nil {
-				log.Panic().AnErr("gracefullShutdown op failed", err)
+				slog.Error("gracefulShutdown op failed", "error", err)
+				panic(err)
 			}
 		}
 	}

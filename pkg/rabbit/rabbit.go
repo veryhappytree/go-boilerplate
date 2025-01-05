@@ -3,11 +3,12 @@ package rabbit
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"go-boilerplate/config"
+	"log/slog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/rs/zerolog/log"
 )
 
 type handlerFunc func([]byte)
@@ -33,14 +34,16 @@ func Setup(cfg config.RabbitConfig) {
 	pusher.handlers = map[string]handlerFunc{}
 	Service = pusher
 
-	log.Info().Msgf("[AMQP] server is running")
+	slog.Info("[AMQP]", "message", "server is running")
 }
 
 func (p *pusher) Publish(_ context.Context, queueName string, data any) {
 	bytes, err := json.Marshal(data)
 	if err != nil {
-		log.Panic().Err(err)
+		slog.Error("[AMQP]", "Publish failed", slog.String("error", err.Error()))
+		panic(err)
 	}
+
 	err = p.Channel.PublishWithContext(
 		context.Background(),
 		"",
@@ -55,11 +58,11 @@ func (p *pusher) Publish(_ context.Context, queueName string, data any) {
 
 	failOnError(err, "Failed to publish a message")
 
-	log.Info().Msgf("[AMQP] Sent %s\n", data)
+	slog.Info("[AMQP]", "message", fmt.Sprintf("Sent %s", data))
 }
 
 func (p *pusher) RegisterConsumer(queueName string, callback func([]byte)) {
-	log.Info().Msgf("[AMQP] Register consumer: %s", queueName)
+	slog.Info("[AMQP]", "message", fmt.Sprintf("Register consumer: %s", queueName))
 	messages, err := p.Channel.Consume(
 		queueName, // queue name
 		"",        // consumer
@@ -70,11 +73,12 @@ func (p *pusher) RegisterConsumer(queueName string, callback func([]byte)) {
 		nil,       // arguments
 	)
 	if err != nil {
-		log.Panic().Err(err)
+		slog.Error("[AMQP]", "RegisterConsumer failed", slog.String("error", err.Error()))
+		panic(err)
 	}
 	go func() {
 		for message := range messages {
-			log.Printf("[AMQP] queue %s - received message: %s\n", queueName, message.Body)
+			slog.Info("[AMQP]", "message", fmt.Sprintf("queue %s - received message: %s", queueName, message.Body))
 			callback(message.Body)
 		}
 	}()
@@ -95,6 +99,7 @@ func (p *pusher) CloseChannel() {
 
 func failOnError(err error, msg string) {
 	if err != nil {
-		log.Panic().Err(err).Msg(msg)
+		slog.Error("[AMQP]", msg, slog.String("error", err.Error()))
+		panic(err)
 	}
 }

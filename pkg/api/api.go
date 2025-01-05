@@ -7,10 +7,11 @@ import (
 
 	"go-boilerplate/config"
 
+	"log/slog"
+
 	"github.com/flowchartsman/swaggerui"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/zerolog/log"
 )
 
 func ServePublicServer(cfg config.ServerConfig) {
@@ -31,11 +32,12 @@ func ServePublicServer(cfg config.ServerConfig) {
 	httpPort := fmt.Sprintf(":%d", cfg.Port)
 	go func() {
 		if err := http.ListenAndServe(httpPort, r); err != nil {
-			log.Panic().AnErr("ServePublicServer http.ListenAndServe failed", err)
+			slog.Error("ServePublicServer http.ListenAndServe failed", "error", err)
+			panic(err)
 		}
 	}()
 
-	log.Info().Msgf("[HTTP] server is running at port: \t%d\n", cfg.Port)
+	slog.Info("[HTTP]", "message", fmt.Sprintf("server is running at port: %d", cfg.Port))
 }
 
 //go:embed docs/api-docs.json
@@ -48,9 +50,10 @@ func ServeAPIDocs(cfg config.ServerConfig) {
 	httpPort := fmt.Sprintf(":%d", cfg.APIDocsPort)
 	go func() {
 		if err := http.ListenAndServe(httpPort, mux); err != nil {
-			log.Panic().AnErr("ServeAPIDocs http.ListenAndServe failed", err)
+			slog.Error("ServeAPIDocs http.ListenAndServe failed", "error", err)
+			panic(err)
 		}
 	}()
 
-	log.Info().Msgf("[HTTP] api docs server is running at port: \t%d\n", cfg.APIDocsPort)
+	slog.Info("[HTTP]", "message", fmt.Sprintf("api docs server is running at port: %d", cfg.APIDocsPort))
 }

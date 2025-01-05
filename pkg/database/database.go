@@ -7,8 +7,9 @@ import (
 	"go-boilerplate/config"
 	"strconv"
 
+	"log/slog"
+
 	"github.com/go-gormigrate/gormigrate/v2"
-	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -24,7 +25,7 @@ func Setup(cfg *config.DatabaseConfig) {
 
 	p, err := strconv.Atoi(cfg.Port)
 	if err != nil {
-		log.Panic().Err(err).Msg("[SQL] db connection was failed")
+		slog.Error("[SQL] parse config", "error", err)
 	}
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d", cfg.Host, cfg.User, cfg.Password, cfg.Name, p)
@@ -38,21 +39,24 @@ func Setup(cfg *config.DatabaseConfig) {
 	DB, err = gorm.Open(postgres.Open(dsn), gormCfg)
 
 	if DB.Error != nil || err != nil {
-		log.Panic().Err(ErrorDBConnectionFailed)
+		slog.Error("[SQL] ErrorDBConnectionFailed", "error", ErrorDBConnectionFailed)
+		panic(ErrorDBConnectionFailed)
 	}
 
 	DBConnection, err = DB.DB()
 	if err != nil {
-		log.Panic().Err(ErrorDBConnectionFailed).Msg("[SQL] db connection was failed")
+		slog.Error("[SQL] ErrorDBConnectionFailed", "error", ErrorDBConnectionFailed)
+		panic(ErrorDBConnectionFailed)
 	}
 
 	var ping bool
 	DB.Raw("select 1").Scan(&ping)
 	if !ping {
-		log.Panic().Err(ErrorDBConnectionFailed).Msg("[SQL] db connection was failed")
+		slog.Error("[SQL] db connection was failed", "error", ErrorDBConnectionFailed)
+		panic(ErrorDBConnectionFailed)
 	}
 
-	log.Info().Msg("[SQL] connection was successfully opened to database")
+	slog.Info("[SQL]", "message", "connection was successfully opened to database")
 }
 
 func EnsureMigrations(migrations []*gormigrate.Migration) {
@@ -65,8 +69,9 @@ func EnsureMigrations(migrations []*gormigrate.Migration) {
 	}, migrations)
 
 	if err := m.Migrate(); err != nil {
-		log.Fatal().Msgf("[SQL] could not migrate: %v", err)
+		slog.Error("[SQL] could not migrate", "err", err)
+		panic(err)
 	}
 
-	log.Info().Msg("[SQL] migration did run successfully")
+	slog.Info("[SQL]", "message", "migration did run successfully")
 }

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/rs/zerolog/log"
+	"log/slog"
 	"github.com/spf13/viper"
 )
 
@@ -50,15 +50,17 @@ func LoadConfig(path string) (config Config) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Panic().Err(err).Msg("[APP] cannot initialize configuration")
+		slog.Error("[APP]", "error", "cannot initialize configuration")
+		panic(err)
 	}
 
 	err = viper.Unmarshal(&config)
 	if err != nil {
-		log.Panic().Err(err).Msg("[APP] cannot initialize configuration")
+		slog.Error("[APP]", "error", "cannot initialize configuration")
+		panic(err)
 	}
 
-	log.Info().Msg("[APP] config was loaded successfully")
+	slog.Info("[APP]", "message", "config was loaded successfully")
 
 	LoadedConfig = config
 

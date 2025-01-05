@@ -3,11 +3,12 @@ package redis
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 
 	"go-boilerplate/config"
 
 	"github.com/go-redis/redis/v9"
-	"github.com/rs/zerolog/log"
 )
 
 const successStatus = "PONG"
@@ -28,8 +29,8 @@ func Setup(ctx context.Context, cfg config.RedisConfig) {
 	status := Client.Ping(ctx)
 
 	if status.Val() != successStatus {
-		log.Panic().Err(ErrorRedisClientConnectionFailed).Msg(status.Val())
+		slog.Error("[CACHE]", "error", ErrorRedisClientConnectionFailed)
 	}
 
-	log.Info().Msgf("[CACHE] redis \t%s", status)
+	slog.Info("[CACHE]", "message", fmt.Sprintf("redis status %s", status))
 }

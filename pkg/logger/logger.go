@@ -1,17 +1,26 @@
 package logger
 
 import (
+	"log/slog"
 	"os"
 	"time"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
-func SetupZeroLog() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{
-		Out:        os.Stderr,
-		TimeFormat: time.RFC3339Nano,
-	})
-	zerolog.TimeFieldFormat = time.RFC3339Nano
+func Setup() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.MessageKey {
+				a.Key = "type"
+			}
+
+			if a.Key == slog.TimeKey {
+				if t, ok := a.Value.Any().(time.Time); ok {
+					a.Value = slog.TimeValue(t.UTC())
+				}
+			}
+			return a
+		},
+	}))
+
+	slog.SetDefault(logger)
 }
