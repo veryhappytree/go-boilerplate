@@ -8,7 +8,6 @@ Easily expandable ready to use golang boilerplate.
 - Database migrations [gormigrate](https://github.com/go-gormigrate/gormigrate)
 - AMQP client [rabbitmq](https://github.com/rabbitmq/amqp091-go)
 - Redis client [redis](https://github.com/redis/go-redis)
-- Logging with [zerolog](https://github.com/rs/zerolog)
 ## How to use
 Copy .env.example file and fill environment variables
 ```
