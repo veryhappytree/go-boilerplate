@@ -1,8 +1,6 @@
 package rabbit
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 
 	"go-boilerplate/config"
@@ -14,7 +12,8 @@ import (
 type handlerFunc func([]byte)
 
 type pusher struct {
-	Channel  *amqp.Channel
+	chans    []*amqp.Channel
+	conn     *amqp.Connection
 	handlers map[string]handlerFunc
 }
 
@@ -24,46 +23,28 @@ func Setup(cfg config.RabbitConfig) {
 	conn, err := amqp.Dial(cfg.RabbitHost)
 	failOnError(err, "Failed to connect to RabbitMQ")
 
-	ch, err := conn.Channel()
-
 	failOnError(err, "Failed to open a channel")
 
 	pusher := new(pusher)
-	pusher.Channel = ch
-	// Feel free to add handlers
-	pusher.handlers = map[string]handlerFunc{}
+	pusher.conn = conn
+
 	Service = pusher
 
 	slog.Info("[AMQP]", "message", "server is running")
 }
 
-func (p *pusher) Publish(_ context.Context, queueName string, data any) {
-	bytes, err := json.Marshal(data)
+func (p *pusher) RegisterConsumer(queueName string, callback func([]byte)) {
+	slog.Info("[AMQP]", "message", fmt.Sprintf("Register consumer: %s", queueName))
+
+	ch, err := p.conn.Channel()
 	if err != nil {
-		slog.Error("[AMQP]", "Publish failed", slog.String("error", err.Error()))
+		slog.Error("[AMQP]", "RegisterConsumer failed", slog.String("error", err.Error()))
 		panic(err)
 	}
 
-	err = p.Channel.PublishWithContext(
-		context.Background(),
-		"",
-		queueName,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        bytes,
-		},
-	)
+	p.chans = append(p.chans, ch)
 
-	failOnError(err, "Failed to publish a message")
-
-	slog.Info("[AMQP]", "message", fmt.Sprintf("Sent %s", data))
-}
-
-func (p *pusher) RegisterConsumer(queueName string, callback func([]byte)) {
-	slog.Info("[AMQP]", "message", fmt.Sprintf("Register consumer: %s", queueName))
-	messages, err := p.Channel.Consume(
+	messages, err := ch.Consume(
 		queueName, // queue name
 		"",        // consumer
 		true,      // auto-ack
@@ -93,8 +74,14 @@ func (p *pusher) RegisterConsumers(consumers []string) {
 	}
 }
 
-func (p *pusher) CloseChannel() {
-	p.Channel.Close()
+func (p *pusher) CloseChannels() error {
+	for _, ch := range p.chans {
+		err := ch.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func failOnError(err error, msg string) {
