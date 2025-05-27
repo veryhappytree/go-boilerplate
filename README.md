@@ -6,7 +6,6 @@ Easily expandable ready to use golang boilerplate.
 - API Documentation [swagger](github.com/flowchartsman/swaggerui)
 - Database usage [gorm](https://github.com/go-gorm/gorm)
 - Database migrations [gormigrate](https://github.com/go-gormigrate/gormigrate)
-- AMQP client [rabbitmq](https://github.com/rabbitmq/amqp091-go)
 - Redis client [redis](https://github.com/redis/go-redis)
 ## How to use
 Copy .env.example file and fill environment variables

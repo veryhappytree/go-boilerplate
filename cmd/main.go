@@ -7,7 +7,6 @@ import (
 	"go-boilerplate/pkg/api"
 	"go-boilerplate/pkg/database"
 	"go-boilerplate/pkg/logger"
-	"go-boilerplate/pkg/rabbit"
 	"go-boilerplate/pkg/redis"
 	"log/slog"
 	"os"
@@ -31,19 +30,12 @@ func main() {
 
 	redis.Setup(context.TODO(), cfg.Redis)
 
-	rabbit.Setup(cfg.Rabbit)
-	rabbit.Service.RegisterConsumer("queueName1", func([]byte) {})
-	rabbit.Service.RegisterConsumer("queueName2", func([]byte) {})
-
 	gracefulShutdown(
 		func() error {
 			return database.DBConnection.Close()
 		},
 		func() error {
 			return redis.Client.Close()
-		},
-		func() error {
-			return rabbit.Service.CloseChannels()
 		},
 		func() error {
 			os.Exit(0)

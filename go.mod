@@ -7,7 +7,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-gormigrate/gormigrate/v2 v2.1.0
 	github.com/go-redis/redis/v9 v9.0.0-rc.2
-	github.com/rabbitmq/amqp091-go v1.7.0
 	github.com/spf13/viper v1.14.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.1
