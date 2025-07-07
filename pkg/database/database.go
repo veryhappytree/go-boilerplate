@@ -18,7 +18,7 @@ import (
 var DB *gorm.DB
 var DBConnection *sql.DB
 
-var ErrorDBConnectionFailed = errors.New("db connection was failed")
+var ErrDBConnectionFailed = errors.New("db connection was failed")
 
 func Setup(cfg *config.DatabaseConfig) {
 	var err error
@@ -39,21 +39,21 @@ func Setup(cfg *config.DatabaseConfig) {
 	DB, err = gorm.Open(postgres.Open(dsn), gormCfg)
 
 	if DB.Error != nil || err != nil {
-		slog.Error("[SQL] ErrorDBConnectionFailed", "error", ErrorDBConnectionFailed)
-		panic(ErrorDBConnectionFailed)
+		slog.Error("[SQL] ErrorDBConnectionFailed", "error", ErrDBConnectionFailed)
+		panic(ErrDBConnectionFailed)
 	}
 
 	DBConnection, err = DB.DB()
 	if err != nil {
-		slog.Error("[SQL] ErrorDBConnectionFailed", "error", ErrorDBConnectionFailed)
-		panic(ErrorDBConnectionFailed)
+		slog.Error("[SQL] ErrorDBConnectionFailed", "error", ErrDBConnectionFailed)
+		panic(ErrDBConnectionFailed)
 	}
 
 	var ping bool
 	DB.Raw("select 1").Scan(&ping)
 	if !ping {
-		slog.Error("[SQL] db connection was failed", "error", ErrorDBConnectionFailed)
-		panic(ErrorDBConnectionFailed)
+		slog.Error("[SQL] db connection was failed", "error", ErrDBConnectionFailed)
+		panic(ErrDBConnectionFailed)
 	}
 
 	slog.Info("[SQL]", "message", "connection was successfully opened to database")

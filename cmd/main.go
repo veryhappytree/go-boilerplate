@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"go-boilerplate/config"
 	"go-boilerplate/pkg/api"
 	"go-boilerplate/pkg/database"
@@ -20,7 +19,7 @@ func main() {
 	slog.Info("[APP]", "message", "Initialize app")
 
 	cfg := config.LoadConfig(".")
-	slog.Info("[APP]", "message", fmt.Sprintf("current env: %s", cfg.App.Env))
+	slog.Info("[APP]", "message", "current env: "+cfg.App.Env)
 
 	database.Setup(&cfg.Database)
 	database.EnsureMigrations(database.Migrations)
