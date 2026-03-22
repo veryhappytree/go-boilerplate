@@ -1,4 +1,4 @@
-.PHONY: run build race tidy lint
+.PHONY: run build race tidy lint test-race vul fix
 
 run:
 	go run ./cmd/main.go
@@ -14,3 +14,12 @@ tidy:
 
 lint:
 	golangci-lint run ./... --fast --config=./.golangci.yml
+
+test-race:
+	go clean -testcache && go test -v --race -cover ./...
+
+vul:
+	govulncheck ./...
+
+fix:
+	go fix ./...
